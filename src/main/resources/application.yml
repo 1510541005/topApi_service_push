@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: topApi_service_push
+  redis:
+    host: localhost
+    password:
+    port: 6379
+
+server:
+  port: 8081
+
+socket:
+  hostname: localhost
+  hostPort: 8082
+  urlParam: account
+
+rocketmq:
+  name-server: 192.168.50.195:9876
+  consumer:
+    group: rocketmq_test
+    sendMessageTimeout: 300000
+  producer:
+    group: rocketmq_test
+    send-message-timeout: 3000
+
+
+
+ws:
+  rocketmq:
+    topic: ws
+    tag: unit
