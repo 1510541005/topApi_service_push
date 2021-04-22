@@ -1,8 +1,10 @@
 package com.topnetwork.cache;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,9 +22,10 @@ public class ClientCache {
     private static Map<String, HashMap<UUID, SocketIOClient>> concurrentHashMap = new ConcurrentHashMap<>();
 
     /**
-     * 本地缓存 缓存用户-topic订阅信息
+     * 使用redis缓存用户-topic订阅信息
      **/
-    private static Map<String, Set<String>> userSubscriptionMap = new ConcurrentHashMap<>();
+    @Resource
+    private RedisTemplate redisTemplate;
 
     /**
      * 存入本地缓存
@@ -41,8 +44,8 @@ public class ClientCache {
 
     /**
      * 根据用户获取所有通道信息
-     * @param account
-     * @return
+     * @param account 用户
+     * @return 当前用户所有连接通道信息
      */
     public HashMap<UUID, SocketIOClient> getUserClient(String account){
         return concurrentHashMap.get(account);
@@ -50,9 +53,8 @@ public class ClientCache {
 
     /**
      * 根据用户及页面sessionId删除页面连接信息
-     * @param account
-     * @param sessionId
-     * @return
+     * @param account 用户
+     * @param sessionId 页面sessionId
      */
     public void deleteSessionClient(String account, UUID sessionId){
         concurrentHashMap.get(account).remove(sessionId);
@@ -60,35 +62,32 @@ public class ClientCache {
 
     /**
      * 给用户添加订阅信息
-     * @param account
-     * @param topic
-     * @return
+     * @param account 用户
+     * @param topic 订阅的消息topic
      */
     public void addSubToUser(String account, String topic){
-        Set<String> subs = userSubscriptionMap.get(account);
-        if (null == subs){
-            subs = new HashSet<>();
+        Boolean isMember = redisTemplate.opsForSet().isMember(account, topic);
+        if (!isMember){
+            redisTemplate.opsForSet().add(account,topic);
         }
-        subs.add(topic);
-        userSubscriptionMap.put(account,subs);
+
     }
 
     /**
      * 用户取消订阅信息
-     * @param account
-     * @param topic
-     * @return
+     * @param account 用户
+     * @param topic 订阅的消息topic
      */
     public void deleteSubToUser(String account, String topic){
-        userSubscriptionMap.get(account).remove(topic);
+        redisTemplate.opsForSet().remove(account,topic);
     }
 
     /**
      * 根据用户获取所有订阅信息
-     * @param account
-     * @return
+     * @param account 用户
+     * @return 用户订阅的topic集合
      */
     public Set<String> getUserAllSub(String account){
-        return userSubscriptionMap.get(account);
+        return redisTemplate.opsForSet().members(account);
     }
 }
