@@ -3,6 +3,7 @@ package com.topnetwork.websocket;
 import com.corundumstudio.socketio.SocketIOServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -14,6 +15,7 @@ import javax.annotation.Resource;
  */
 @Component
 @Slf4j
+@Order(value = 1)
 public class NettySocketApplicationRunner implements CommandLineRunner {
     @Resource
     private SocketIOServer socketServer;

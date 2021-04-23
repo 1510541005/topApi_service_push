@@ -170,13 +170,19 @@ public class NettySocketEventHandler {
      * @param topic 消息主题
      * @param messageExt 消息体
      **/
-    public void receiveMqMessage(String topic, MessageExt messageExt){
-        byte[] body = messageExt.getBody();
-        String msgContent = new String(body);
-        log.info("接收到{}消息 :{}",topic, msgContent);
-        SocketMessage socketMessage = new SocketMessage();
-        socketMessage.setTopic(topic);
-        socketMessage.setMsg(msgContent);
-        sendBroadcastToSub(topic,socketMessage);
+    public Boolean receiveMqMessage(String topic, MessageExt messageExt){
+        try{
+            byte[] body = messageExt.getBody();
+            String msgContent = new String(body);
+            log.info("接收到{}消息 :{}",topic, msgContent);
+            SocketMessage socketMessage = new SocketMessage();
+            socketMessage.setTopic(topic);
+            socketMessage.setMsg(msgContent);
+            sendBroadcastToSub(topic,socketMessage);
+        }catch (Exception e){
+            log.info("topic={},msgId={},消息推送失败",topic,messageExt.getMsgId(),e);
+            return false;
+        }
+        return true;
     }
 }
