@@ -22,8 +22,8 @@ public class UserController {
 
     /**
      * 获取用户当前所有订阅信息
-     * @param account
-     * @return
+     * @param account 用户
+     * @return 返回用户订阅的topic信息
      * */
     @RequestMapping("/getUserAllSub")
     public Object getUserAllSub(@RequestParam(name = "account") String account){

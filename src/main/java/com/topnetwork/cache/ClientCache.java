@@ -19,27 +19,27 @@ public class ClientCache {
     /**
      * 本地缓存 缓存用户-连接通道信息
      **/
-    private static Map<String, HashMap<UUID, SocketIOClient>> concurrentHashMap = new ConcurrentHashMap<>();
+    private static final Map<String, HashMap<UUID, SocketIOClient>> CONCURRENT_HASH_MAP = new ConcurrentHashMap<>();
 
     /**
      * 使用redis缓存用户-topic订阅信息
      **/
     @Resource
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String,String> redisTemplate;
 
     /**
      * 存入本地缓存
      * @param account 用户
      * @param sessionId 页面sessionId
-     * @param socketIOClient 页面对应的通道连接信息
+     * @param client 页面对应的通道连接信息
      */
-    public void saveClient(String account, UUID sessionId, SocketIOClient socketIOClient){
-        HashMap<UUID, SocketIOClient> sessionClientCache = concurrentHashMap.get(account);
+    public void saveClient(String account, UUID sessionId, SocketIOClient client){
+        HashMap<UUID, SocketIOClient> sessionClientCache = CONCURRENT_HASH_MAP.get(account);
         if (null == sessionClientCache){
             sessionClientCache = new HashMap<>();
         }
-        sessionClientCache.put(sessionId, socketIOClient);
-        concurrentHashMap.put(account, sessionClientCache);
+        sessionClientCache.put(sessionId, client);
+        CONCURRENT_HASH_MAP.put(account, sessionClientCache);
     }
 
     /**
@@ -48,7 +48,7 @@ public class ClientCache {
      * @return 当前用户所有连接通道信息
      */
     public HashMap<UUID, SocketIOClient> getUserClient(String account){
-        return concurrentHashMap.get(account);
+        return CONCURRENT_HASH_MAP.get(account);
     }
 
     /**
@@ -57,29 +57,31 @@ public class ClientCache {
      * @param sessionId 页面sessionId
      */
     public void deleteSessionClient(String account, UUID sessionId){
-        concurrentHashMap.get(account).remove(sessionId);
+        CONCURRENT_HASH_MAP.get(account).remove(sessionId);
     }
 
     /**
      * 给用户添加订阅信息
      * @param account 用户
      * @param topic 订阅的消息topic
+     * @return 返回添加成功的个数
      */
-    public void addSubToUser(String account, String topic){
+    public Long addSubToUser(String account, String topic){
         Boolean isMember = redisTemplate.opsForSet().isMember(account, topic);
-        if (!isMember){
-            redisTemplate.opsForSet().add(account,topic);
+        if (Boolean.FALSE.equals(isMember)){
+            return redisTemplate.opsForSet().add(account,topic);
         }
-
+        return 0L;
     }
 
     /**
      * 用户取消订阅信息
      * @param account 用户
      * @param topic 订阅的消息topic
+     * @return 返回删除的个数
      */
-    public void deleteSubToUser(String account, String topic){
-        redisTemplate.opsForSet().remove(account,topic);
+    public Long deleteSubToUser(String account, String topic){
+        return redisTemplate.opsForSet().remove(account,topic);
     }
 
     /**
@@ -89,5 +91,14 @@ public class ClientCache {
      */
     public Set<String> getUserAllSub(String account){
         return redisTemplate.opsForSet().members(account);
+    }
+
+    /**
+     * 删除用户
+     * @param account 用户
+     * @return 是否删除成功
+     */
+    public Boolean deleteAccount(String account){
+        return redisTemplate.delete(account);
     }
 }

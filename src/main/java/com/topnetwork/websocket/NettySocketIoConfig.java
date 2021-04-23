@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Clgo
  */
 @Configuration
-public class NettySocketioConfig {
+public class NettySocketIoConfig {
 
     @Value("${socket.hostname}")
     private String hostName;
@@ -22,13 +22,11 @@ public class NettySocketioConfig {
      * netty-socketio服务器
      */
     @Bean
-    public SocketIOServer socketIOServer() {
+    public SocketIOServer socketServer() {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
         config.setHostname(hostName);
         config.setPort(port);
-
-        SocketIOServer server = new SocketIOServer(config);
-        return server;
+        return new SocketIOServer(config);
     }
 
     /**
@@ -36,6 +34,6 @@ public class NettySocketioConfig {
      */
     @Bean
     public SpringAnnotationScanner springAnnotationScanner() {
-        return new SpringAnnotationScanner(socketIOServer());
+        return new SpringAnnotationScanner(socketServer());
     }
 }

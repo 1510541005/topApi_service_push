@@ -16,11 +16,16 @@ import javax.annotation.Resource;
 @Slf4j
 public class NettySocketApplicationRunner implements CommandLineRunner {
     @Resource
-    private SocketIOServer socketIOServer;
+    private SocketIOServer socketServer;
 
     @Override
-    public void run(String... args) throws Exception {
-        socketIOServer.start();
-        log.info("socket.io启动成功！");
+    public void run(String... args) {
+        try{
+            socketServer.start();
+            log.info("socket.io启动成功！");
+        }catch (Exception e){
+            log.error("socket.io启动失败！",e);
+        }
+
     }
 }

@@ -17,15 +17,18 @@ socket:
 rocketmq:
   name-server: 192.168.50.195:9876
   consumer:
-    group: rocketmq_test
+    group: topinfura255
     sendMessageTimeout: 300000
   producer:
-    group: rocketmq_test
+    group: topinfura255
     send-message-timeout: 3000
-
-
 
 ws:
   rocketmq:
-    topic: ws
-    tag: unit
+    topic: test
+    topic_block: topic_new_unitblock
+    topic_transaction: topic_new_transaction
+    topic_account: topic_new_account
+    group_block: block255
+    group_transaction: transaction255
+    group_account: account255

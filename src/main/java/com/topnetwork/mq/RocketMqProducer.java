@@ -18,17 +18,16 @@ import javax.annotation.Resource;
 @Slf4j
 public class RocketMqProducer {
     @Resource
-    private RocketMQTemplate rocketMQTemplate;
+    private RocketMQTemplate rocketTemplate;
 
     @Value("${ws.rocketmq.topic}")
     private String topic;
 
     /**
-     * @param msgBody
-     * @return
+     * @param msgBody 消息体
      **/
     public void sendMsg(String msgBody){
         log.info("开始消息发送:{}",msgBody);
-        rocketMQTemplate.syncSend(topic, MessageBuilder.withPayload(msgBody).build());
+        rocketTemplate.syncSend(topic, MessageBuilder.withPayload(msgBody).build());
     }
 }

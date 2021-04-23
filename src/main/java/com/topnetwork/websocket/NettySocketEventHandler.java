@@ -10,6 +10,7 @@ import com.corundumstudio.socketio.annotation.OnEvent;
 import com.topnetwork.cache.ClientCache;
 import com.topnetwork.common.SocketMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,7 @@ public class NettySocketEventHandler {
     /**
      * 客户端连接的时候触发
      *
-     * @param client
+     * @param client 页面对应的通道连接信息
      */
     @OnConnect
     public void onConnect(SocketIOClient client) {
@@ -69,8 +70,7 @@ public class NettySocketEventHandler {
 
     /**
      * 客户端关闭连接时触发
-     *
-     * @param client
+     * @param client 页面对应的通道连接信息
      */
     @OnDisconnect
     public void onDisconnect(SocketIOClient client) {
@@ -87,13 +87,13 @@ public class NettySocketEventHandler {
     /**
      * 消息订阅
      * @date 2021/04/20 14:06
-     * @param client
-     * @param request
-     * @param channel
-     * @return
+     * @param client 页面对应的通道连接信息
+     * @param request 应答
+     * @param channel 通道
      **/
     @OnEvent("sub")
     public void topSub(SocketIOClient client,AckRequest request,String channel){
+        log.info("当前sessionId={}，是否应答请求={},channel={}",client.getSessionId(),request.isAckRequested(),channel);
         String param = client.getHandshakeData().getSingleUrlParam(urlParam);
         String sa = client.getRemoteAddress().toString();
         String clientIp = sa.substring(1, sa.indexOf(":"));
@@ -111,12 +111,13 @@ public class NettySocketEventHandler {
     /**
      * 取消订阅
      * @date 2021/04/20 14:06
-     * @param client
-     * @param request
-     * @param channel
+     * @param client 页面对应的通道连接信息
+     * @param request 应答
+     * @param channel 通道
      **/
     @OnEvent("unsub")
     public void topUnSub(SocketIOClient client, AckRequest request, String channel){
+        log.info("当前sessionId={}，是否应答请求={},channel={}",client.getSessionId(),request.isAckRequested(),channel);
         String param = client.getHandshakeData().getSingleUrlParam(urlParam);
         String sa = client.getRemoteAddress().toString();
         String clientIp = sa.substring(1, sa.indexOf(":"));
@@ -133,12 +134,13 @@ public class NettySocketEventHandler {
     /**
      * 获取用户下已订阅的服务
      * @date 2021/04/20 14:06
-     * @param client
-     * @param request
-     * @param channel
+     * @param client 页面对应的通道连接信息
+     * @param request 应答
+     * @param channel 通道
      **/
     @OnEvent("getUserAllSub")
     public void getUserAllSub(SocketIOClient client, AckRequest request, String channel){
+        log.info("当前sessionId={}，是否应答请求={},channel={}",client.getSessionId(),request.isAckRequested(),channel);
         String param = client.getHandshakeData().getSingleUrlParam(urlParam);
         Set<String> userAllSub = clientCache.getUserAllSub(param);
         log.info("当前用户={},订阅的服务有:{}", param, JSON.toJSONString(userAllSub));
@@ -154,10 +156,27 @@ public class NettySocketEventHandler {
      * 消息广播
      * @author Clgo
      * @date 2021/04/20 15:00
-     * @param channel
-     * @param message
+     * @param channel 消息通道
+     * @param message 对应发送的消息
      **/
     public void sendBroadcastToSub(String channel, SocketMessage message) {
         socketIoServer.getRoomOperations(channel).sendEvent(channel,message);
+    }
+
+    /**
+     * 消息广播
+     * @author Clgo
+     * @date 2021/04/20 15:00
+     * @param topic 消息主题
+     * @param messageExt 消息体
+     **/
+    public void receiveMqMessage(String topic, MessageExt messageExt){
+        byte[] body = messageExt.getBody();
+        String msgContent = new String(body);
+        log.info("接收到{}消息 :{}",topic, msgContent);
+        SocketMessage socketMessage = new SocketMessage();
+        socketMessage.setTopic(topic);
+        socketMessage.setMsg(msgContent);
+        sendBroadcastToSub(topic,socketMessage);
     }
 }
