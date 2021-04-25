@@ -29,6 +29,3 @@ ws:
     topic_block: topic_new_unitblock
     topic_transaction: topic_new_transaction
     topic_account: topic_new_account
-    group_block: block255
-    group_transaction: transaction255
-    group_account: account255

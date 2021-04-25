@@ -67,11 +67,29 @@ public class ClientCache {
      * @return 返回添加成功的个数
      */
     public Long addSubToUser(String account, String topic){
+        //开启redis事务
+        redisTemplate.multi();
         Boolean isMember = redisTemplate.opsForSet().isMember(account, topic);
         if (Boolean.FALSE.equals(isMember)){
             return redisTemplate.opsForSet().add(account,topic);
         }
+        // 同时将用户添加到topic下
+        addUserToTopic(topic,account);
+        // redis事务提交
+        redisTemplate.exec();
         return 0L;
+    }
+
+    /**
+     * 将用户添加到topic下
+     * @param account 用户
+     * @param topic 订阅的消息topic
+     */
+    public void addUserToTopic(String topic, String account){
+        Boolean isMember = redisTemplate.opsForSet().isMember(topic, account);
+        if (Boolean.FALSE.equals(isMember)){
+            redisTemplate.opsForSet().add(topic,account);
+        }
     }
 
     /**
@@ -81,7 +99,14 @@ public class ClientCache {
      * @return 返回删除的个数
      */
     public Long deleteSubToUser(String account, String topic){
-        return redisTemplate.opsForSet().remove(account,topic);
+        //开启redis事务
+        redisTemplate.multi();
+        //删除topic下对应的用户
+        redisTemplate.opsForSet().remove(topic,account);
+        Long num = redisTemplate.opsForSet().remove(account, topic);
+        //redis事务提交执行
+        redisTemplate.exec();
+        return num;
     }
 
     /**
@@ -91,6 +116,15 @@ public class ClientCache {
      */
     public Set<String> getUserAllSub(String account){
         return redisTemplate.opsForSet().members(account);
+    }
+
+    /**
+     * 根据topic获取该topic下的所有用户
+     * @param topic 主题
+     * @return topic对应的用户集合
+     */
+    public Set<String> getAllUsersByTopic(String topic){
+        return redisTemplate.opsForSet().members(topic);
     }
 
     /**
